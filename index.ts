@@ -1,11 +1,21 @@
-const dataToQueryString = obj => {
-	let arr = []
-	for (let key in obj) arr.push(encodeURIComponent(key) + '=' + JSON.stringify(obj[key]))
-	return arr.join("&")
+interface Data {
+    [key: string]: string
 }
 
-const queryStringToData = string => {
-	let data = {}
+
+const dataToQueryString = (data: Data): string => {
+    let strings: string[] = []
+	
+	Object.keys(data).forEach((key: string) => strings.push(encodeURIComponent(key) + '=' + JSON.stringify(data[key])))
+	
+	return strings.join("&")
+}
+
+
+
+
+const queryStringToData = (string: string): Data => {
+	let data: Data = {}
 	string = decodeURIComponent(string)
 	let arr = string.split('&')
 	arr[0] = arr[0].substring(1)
@@ -19,24 +29,38 @@ const queryStringToData = string => {
 	return data
 }
 
-const getUrlParams = () => window.location.search
 
-const getDataFromUrl = () => queryStringToData(getUrlParams()) ?? {}
 
-const createUrl = string => 
+const getUrlParams = (): string => window.location.search
+
+
+
+
+const getDataFromUrl = (): Data => queryStringToData(getUrlParams()) ?? {}
+
+
+
+
+const createUrl = (params: string) => 
 	window.location.origin
 		+ window.location.pathname 
 		+ '?' 
-		+ string
+		+ params
 
-const removeEmpty = obj => (
-	Object.entries(obj).forEach(([key, val]) =>
+
+
+
+const removeEmpty = (obj: Data): Data => (
+	Object.entries(obj).forEach(([key, val]: Array<any>) =>
 		val && typeof val === 'object' 
 			? !(Object.keys(val)?.length ?? val.length) ? delete obj[key] : removeEmpty(val)
 			: val == null && delete obj[key]
 	), obj)
 
-const setObjToUrl = data => {
+
+
+
+const setObjToUrl = (data: Data): void => {
 	let updatedData = { ...getDataFromUrl(), ...data }
 	const url = createUrl(
 		dataToQueryString(removeEmpty(updatedData))
@@ -44,22 +68,30 @@ const setObjToUrl = data => {
 	window.history.pushState({ path: url }, '', url)
 }
 
-const getButSetIfEmpty = ({ key, defaultValue }) =>
+
+
+
+
+const getButSetIfEmpty = ({ key, defaultValue }: { key: string, defaultValue: any }): Data | string =>
 	getDataFromUrl()[key] ?? (
 		setObjToUrl({ [key]: defaultValue }),
 		getDataFromUrl()[key]
 	)
 
-const removeAllParams = () => window.history.pushState( {}, '', window.location.origin )
+
+
+
+
+const removeAllParams = (): void => window.history.pushState( {}, '', window.location.origin )
+
+
+
 
 const urlStore = {
 	get: getButSetIfEmpty,
 	set: setObjToUrl,
 	clear: removeAllParams,
 }
-
-export default urlStore
-
 /*
 const dataToQueryString = (obj, prefix) => {
 	let arr = [], key, value;
